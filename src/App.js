@@ -1,15 +1,15 @@
 import React, { useEffect } from "react";
 import SpotifyWebApi from "spotify-web-api-js";
-import './App.css';
-import Login from "./Login"
-import { getTokenFromResponse } from "./spotify"; 
-
+import { useStateValue } from "./StateProvider";
+import Player from "./Player";
+import { getTokenFromResponse } from "./spotify";
+import "./App.css";
+import Login from "./Login";
 
 const s = new SpotifyWebApi();
 
 function App() {
   const [{ token }, dispatch] = useStateValue();
-
 
   useEffect(() => {
     // Set token
@@ -25,21 +25,45 @@ function App() {
         token: _token,
       });
 
+      s.getPlaylist("37i9dQZEVXcJZyENOWUFo7").then((response) =>
+        dispatch({
+          type: "SET_DISCOVER_WEEKLY",
+          discover_weekly: response,
+        })
+      );
+
+      s.getMyTopArtists().then((response) =>
+        dispatch({
+          type: "SET_TOP_ARTISTS",
+          top_artists: response,
+        })
+      );
+
+      dispatch({
+        type: "SET_SPOTIFY",
+        spotify: s,
+      });
+
       s.getMe().then((user) => {
         dispatch({
           type: "SET_USER",
           user,
         });
       });
+
+      s.getUserPlaylists().then((playlists) => {
+        dispatch({
+          type: "SET_PLAYLISTS",
+          playlists,
+        });
+      });
     }
-    }, [token, dispatch]);
-
-
+  }, [token, dispatch]);
 
   return (
     <div className="app">
-     
-      <Login />
+      {!token && <Login />}
+      {token && <Player spotify={s} />}
     </div>
   );
 }
